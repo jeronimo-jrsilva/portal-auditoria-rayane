@@ -42,6 +42,7 @@
         .hidden { display: none; }
         #error-msg { color: #ff4444; font-size: 0.85rem; margin-top: 10px; display: none; }
         video, audio { max-width: 100%; border-radius: 4px; }
+        pre { white-space: pre-wrap; font-family: inherit; margin: 0; }
     </style>
 </head>
 <body>
@@ -52,12 +53,12 @@
         <input type="password" id="unlock-pass" placeholder="Chave Mestra" onkeypress="if(event.key === 'Enter') tryUnlock()">
         <button onclick="tryUnlock()">Desbloquear Relatório</button>
         <div id="error-msg">Chave inválida ou dados corrompidos.</div>
-        <div id="build-tag" style="font-size: 0.6rem; color: #ccc; margin-top: 15px; opacity: 0.5;">Build: v18.0.4-soberano-20260416-1145</div>
+        <div id="build-tag" style="font-size: 0.6rem; color: #ccc; margin-top: 15px; opacity: 0.5;">Build: v18.0.5-gold-20260416-1215</div>
     </div>
 </div>
 <header>
     <h1>🛡️ Relatório de Auditoria: 2026</h1>
-    <p>Cadeia de Custódia & Evidências Digitais (v18.0)</p>
+    <p>Reconstituição Integral & Cadeia de Custódia (v18.0.5)</p>
 </header>
 <div class="nav">
     <a onclick="showView('chat')">💬 Registro de Chat</a>
@@ -78,10 +79,8 @@
             if (!res.ok) throw new Error("File not found");
             const data = await res.json();
             encryptedPayload = data.payload;
-            console.log("Data loaded successfully.");
         } catch(e) { 
-            console.error("Fetch error:", e);
-            document.getElementById('error-msg').innerText = "Erro ao carregar dados cifrados (assets/data.json não encontrado).";
+            document.getElementById('error-msg').innerText = "Erro ao carregar dados cifrados.";
             document.getElementById('error-msg').style.display = 'block';
         }
     }
@@ -111,7 +110,6 @@
             renderAll();
             document.getElementById('unlock-overlay').classList.add('unlocked');
         } else {
-            document.getElementById('error-msg').innerText = "Chave inválida ou dados corrompidos.";
             document.getElementById('error-msg').style.display = 'block';
         }
     }
@@ -133,14 +131,22 @@
                 container.innerHTML += `<div class="day-divider"><span>${m.day}</span></div>`;
                 lastDay = m.day;
             }
-            if (m.type === 'chat') {
+            if (m.type === 'system') {
+                container.innerHTML += `<div class="system-msg">${m.text}</div>`;
+            } else if (m.type === 'chat') {
                 let contentHtml = "";
                 m.content.forEach(c => {
-                    if (c.type === 'text') contentHtml += `<p style="margin:0 0 10px 0;">${c.val}</p>`;
+                    if (c.type === 'text') contentHtml += `<div style="margin:0 0 10px 0;"><pre>${c.val}</pre></div>`;
                     else if (c.type === 'media') {
                         const url = 'assets/media/' + c.file;
-                        if (c.file.toLowerCase().endsWith('.mp4')) contentHtml += `<div class="media-box"><video controls><source src="${url}" type="video/mp4"></video></div>`;
-                        else contentHtml += `<div class="media-box"><audio controls><source src="${url}"></audio></div>`;
+                        // For audio in WhatsApp format
+                        if (c.file.toLowerCase().endsWith('.opus') || c.file.toLowerCase().endsWith('.ogg')) {
+                            contentHtml += `<div class="media-box"><audio controls><source src="${url}"></audio></div>`;
+                        } else if (c.file.toLowerCase().endsWith('.mp4')) {
+                            contentHtml += `<div class="media-box"><video controls><source src="${url}" type="video/mp4"></video></div>`;
+                        } else {
+                            contentHtml += `<div class="media-box"><img src="${url}" style="max-width:100%;"></div>`;
+                        }
                     }
                 });
                 container.innerHTML += `
@@ -157,7 +163,7 @@
         const container = document.getElementById('view-timeline');
         container.innerHTML = "";
         portalData.timeline.forEach(e => {
-            let status = e.title.includes('Calúnia') || e.title.includes('Ameaça') ? 'critical' : (e.title.includes('Invasão') ? 'warning' : '');
+            let status = e.title.includes('Calúnia') || e.title.includes('Ameaça') || e.title.includes('Exposição') ? 'critical' : (e.title.includes('Invasão') || e.title.includes('Intimidação') ? 'warning' : '');
             container.innerHTML += `
                 <div class="timeline-event">
                     <div class="event-card ${status}">
