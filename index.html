@@ -7,12 +7,13 @@
     <title>🛡️ Portal de Auditoria 2026</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
-        :root { --primary: #1a3a5f; --accent: #c9a55c; --bg: #f0f2f5; --whatsapp-bg: #e5ddd5; --danger: #d9534f; --warning: #f0ad4e; }
+        :root { --primary: #1a3a5f; --accent: #c9a55c; --bg: #f0f2f5; --whatsapp-bg: #e5ddd5; --danger: #d9534f; --warning: #f0ad4e; --success: #5cb85c; }
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; }
         header { background: var(--primary); color: white; text-align: center; padding: 1.5rem 0; border-bottom: 4px solid var(--accent); }
         .nav { background: white; border-bottom: 1px solid #ddd; padding: 10px; text-align: center; position: sticky; top: 0; z-index: 100; display: none; }
         .nav.unlocked { display: block; }
-        .nav a { margin: 0 10px; text-decoration: none; color: var(--primary); font-weight: bold; font-size: 0.85rem; cursor: pointer; padding: 5px 10px; border-radius: 4px; }
+        .nav a { margin: 0 10px; text-decoration: none; color: var(--primary); font-weight: bold; font-size: 0.85rem; cursor: pointer; padding: 5px 10px; border-radius: 4px; transition: 0.2s; }
+        .nav a:hover { background: #eee; }
         .nav a.active { background: var(--primary); color: white; }
         
         #unlock-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); backdrop-filter: blur(10px); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; color: white; transition: all 0.5s ease; }
@@ -26,7 +27,7 @@
         .hidden { display: none; }
         #error-msg { color: #ff4444; font-size: 0.85rem; margin-top: 10px; display: none; }
         
-        /* Estilos herdados dos arquivos originais para manter fidelidade */
+        /* Estilos WhatsApp */
         .chat-container { background: var(--whatsapp-bg); padding: 20px; border-radius: 8px; display: flex; flex-direction: column; min-height: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .day-divider { text-align: center; margin: 25px 0; }
         .day-divider span { background: white; padding: 6px 15px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; color: #54656f; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
@@ -42,39 +43,49 @@
         pre { white-space: pre-wrap; font-family: inherit; margin: 0; }
         
         /* Estilos Cronologia */
-        .timeline-container { padding: 20px; }
-        .timeline-event { position: relative; margin-bottom: 35px; padding-left: 35px; border-left: 2px solid var(--accent); }
-        .timeline-event::before { content: ''; position: absolute; left: -9px; top: 5px; width: 16px; height: 16px; border-radius: 50%; background: var(--primary); border: 3px solid #fff; z-index: 2; }
-        .event-card { background: white; padding: 1.2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 5px solid var(--primary); }
-        .event-card.critical { border-left-color: var(--danger); }
-        .event-card.warning { border-left-color: var(--warning); }
-        .event-date { color: var(--accent); font-weight: bold; font-size: 0.85rem; display: block; margin-bottom: 5px; }
-        .event-title { margin: 0 0 8px 0; color: var(--primary); font-size: 1.1rem; }
-        .legend-container { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px; }
-        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; color: #666; }
-        .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .legend-container { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-bottom: 2rem; }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; color: #555; }
+        .legend-color { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.1); }
+        .timeline { position: relative; padding: 20px 0; }
+        .timeline::after { content: ''; position: absolute; width: 4px; background-color: var(--accent); top: 0; bottom: 0; left: 31px; margin-left: -2px; }
+        .event { padding: 10px 40px; position: relative; margin-bottom: 30px; }
+        .event::after { content: ''; position: absolute; width: 20px; height: 20px; left: 21px; background-color: white; border: 4px solid var(--primary); top: 15px; border-radius: 50%; z-index: 1; }
+        .event-content { padding: 1.5rem; background-color: white; position: relative; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 5px solid var(--primary); }
+        .event.critical .event-content { border-left-color: var(--danger); }
+        .event.warning .event-content { border-left-color: var(--warning); }
+        .event.success .event-content { border-left-color: var(--success); }
+        .event-date { font-weight: bold; color: var(--accent); font-size: 0.85rem; margin-bottom: 0.5rem; display: block; }
+        .event-title { margin: 0 0 0.8rem; color: var(--primary); font-size: 1.2rem; }
+        .event-desc { font-size: 0.95rem; color: #555; margin: 0; }
+        .evidence-tag { display: inline-block; background: #eee; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; color: #666; margin-top: 10px; }
+        
+        @media screen and (max-width: 600px) {
+            .timeline::after { left: 21px; }
+            .event { padding-left: 50px; }
+            .event::after { left: 11px; }
+        }
     </style>
 </head>
 <body>
 <div id="unlock-overlay">
     <div class="unlock-box">
         <h2>🛡️ Acesso Seguro</h2>
-        <p>Relatório Consolidado (Versão Aprovada).</p>
+        <p>Relatório de Auditoria v18 (Fidelidade Total).</p>
         <input type="password" id="unlock-pass" placeholder="Chave Mestra" onkeypress="if(event.key === 'Enter') tryUnlock()">
         <button onclick="tryUnlock()">Desbloquear Portal</button>
         <div id="error-msg">Chave inválida ou dados corrompidos.</div>
-        <div style="font-size: 0.6rem; color: #ccc; margin-top: 15px; opacity: 0.5;">Build: v18.0.6-gold-approved-20260416-1240</div>
+        <div style="font-size: 0.6rem; color: #ccc; margin-top: 15px; opacity: 0.5;">Build: v18.0.7-gold-fidelity-fix-20260416-1250</div>
     </div>
 </div>
 <header>
     <h1>🛡️ Portal de Auditoria: Caso Rayane</h1>
-    <p>Consolidação de Evidências Digitais (v18.0.6)</p>
+    <p>Reconstituição Integral & Cadeia de Custódia (v18.0.7)</p>
 </header>
 <div class="nav" id="main-nav">
     <a id="btn-privado" onclick="showView('privado')">💬 Conversa Privada</a>
     <a id="btn-grupo" onclick="showView('grupo')">👥 Passagens Grupo</a>
     <a id="btn-cronologia" onclick="showView('cronologia')">📅 Cronologia Mestra</a>
-    <a href="javascript:location.reload()" style="color: #d9534f;">🔒 Sair</a>
+    <a href="javascript:location.reload()" style="color: #d9534f; margin-left: 20px;">🔒 Sair</a>
 </div>
 <main class="container-view">
     <div id="view-content">
@@ -135,7 +146,6 @@
             content.innerHTML = portalData.cronologia;
         }
         
-        // Update nav active state
         document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'));
         document.getElementById('btn-' + view).classList.add('active');
         window.scrollTo(0,0);
