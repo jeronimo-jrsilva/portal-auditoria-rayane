@@ -1,16 +1,42 @@
-# 🛡️ Auditoria Gitignore
-# Ignorar arquivos de script e fontes unencrypted
+# 🛡️ Auditoria Gitignore (E2EE Hardened)
 
+# Ignorar fontes de dados e scripts
 *.py
 *.md
 *.vtt
 *.txt
 *.pdf
-.DS_Store
-*.enc.json.bak
-node_modules/
-.env
+*.json
+*.docx
+*.zip
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.opus
+*.mp4
 
-# Apenas permitir o index.html e a pasta assets/ (que contém dados cifrados)
+# Ignorar HTMLs locais e temporários
+conversa_*.html
+cronologia.html
+index_local.html
+source_extraction/
+
+# Permitir APENAS o essencial cifrado para o GitHub Pages
 !index.html
 !assets/
+!assets/css/
+!assets/css/*.css
+!assets/media/
+!assets/data.enc.json
+!assets/media/*.mp4
+!assets/media/*.opus
+!assets/media/*.ogg
+!assets/media/*.mp3
+!assets/media/*.wav
+
+# Outros
+.DS_Store
+node_modules/
+.env
+temp_pwd.txt

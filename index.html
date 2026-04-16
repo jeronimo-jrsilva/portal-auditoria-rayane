@@ -33,10 +33,18 @@
         .media-box { background: rgba(0,0,0,0.05); padding: 10px; border-radius: 6px; margin: 10px 0; text-align: center; border: 1px dashed #ccc; }
         .timeline-container { padding: 20px; border-left: 2px solid var(--accent); }
         .timeline-event { position: relative; margin-bottom: 35px; padding-left: 35px; }
-        .timeline-event::before { content: ''; position: absolute; left: -9px; top: 5px; width: 16px; height: 16px; border-radius: 50%; background: var(--primary); border: 3px solid #fff; }
-        .event-date { color: var(--accent); font-weight: bold; font-size: 0.85rem; }
-        .event-title { margin: 5px 0; color: var(--primary); font-size: 1.1rem; }
-        .event-desc { font-size: 0.9rem; color: #444; line-height: 1.4; }
+        .timeline-event::before { content: ''; position: absolute; left: -9px; top: 5px; width: 16px; height: 16px; border-radius: 50%; background: var(--primary); border: 3px solid #fff; z-index: 2; }
+        .event-card { background: white; padding: 1.2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 5px solid var(--primary); }
+        .event-card.critical { border-left-color: var(--danger); }
+        .event-card.warning { border-left-color: var(--warning); }
+        .event-date { color: var(--accent); font-weight: bold; font-size: 0.85rem; display: block; margin-bottom: 5px; }
+        .event-title { margin: 0 0 8px 0; color: var(--primary); font-size: 1.1rem; }
+        .event-desc { font-size: 0.9rem; color: #444; line-height: 1.4; margin: 0; }
+        
+        .legend { display: flex; gap: 15px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: bold; color: #666; }
+        .legend-color { width: 10px; height: 10px; border-radius: 2px; }
+        
         .hidden { display: none; }
         #error-msg { color: #ff4444; font-size: 0.85rem; margin-top: 10px; display: none; }
         video, audio { max-width: 100%; border-radius: 4px; }
@@ -162,13 +170,25 @@
 
     function renderTimeline() {
         const container = document.getElementById('view-timeline');
-        container.innerHTML = "";
+        container.innerHTML = `
+            <div class="legend">
+                <div class="legend-item"><div class="legend-color" style="background: var(--primary)"></div> Neutro</div>
+                <div class="legend-item"><div class="legend-color" style="background: var(--warning)"></div> Desvio</div>
+                <div class="legend-item"><div class="legend-color" style="background: var(--danger)"></div> Crítico</div>
+            </div>
+        `;
         portalData.timeline.forEach(e => {
+            let statusClass = "";
+            if (e.desc.toLowerCase().includes('crítico') || e.title.toLowerCase().includes('calúnia') || e.title.toLowerCase().includes('exposição') || e.title.toLowerCase().includes('ameaça')) statusClass = "critical";
+            else if (e.desc.toLowerCase().includes('alerta') || e.desc.toLowerCase().includes('desvio') || e.title.toLowerCase().includes('coação')) statusClass = "warning";
+            
             container.innerHTML += `
                 <div class="timeline-event">
-                    <div class="event-date">${e.date}</div>
-                    <h3 class="event-title">${e.title}</h3>
-                    <p class="event-desc">${e.desc}</p>
+                    <div class="event-card ${statusClass}">
+                        <div class="event-date">${e.date}</div>
+                        <h3 class="event-title">${e.title}</h3>
+                        <p class="event-desc">${e.desc}</p>
+                    </div>
                 </div>
             `;
         });
