@@ -9,17 +9,25 @@
     <style>
         :root { --primary: #1a3a5f; --accent: #c9a55c; --bg: #f0f2f5; --whatsapp-bg: #e5ddd5; --danger: #d9534f; --warning: #f0ad4e; }
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; }
-        header { background: var(--primary); color: white; text-align: center; padding: 2rem 0; border-bottom: 4px solid var(--accent); }
-        .nav { background: white; border-bottom: 1px solid #ddd; padding: 10px; text-align: center; position: sticky; top: 0; z-index: 100; }
-        .nav a { margin: 0 15px; text-decoration: none; color: var(--primary); font-weight: bold; font-size: 0.9rem; cursor: pointer; }
+        header { background: var(--primary); color: white; text-align: center; padding: 1.5rem 0; border-bottom: 4px solid var(--accent); }
+        .nav { background: white; border-bottom: 1px solid #ddd; padding: 10px; text-align: center; position: sticky; top: 0; z-index: 100; display: none; }
+        .nav.unlocked { display: block; }
+        .nav a { margin: 0 10px; text-decoration: none; color: var(--primary); font-weight: bold; font-size: 0.85rem; cursor: pointer; padding: 5px 10px; border-radius: 4px; }
+        .nav a.active { background: var(--primary); color: white; }
+        
         #unlock-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); backdrop-filter: blur(10px); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; color: white; transition: all 0.5s ease; }
         #unlock-overlay.unlocked { opacity: 0; pointer-events: none; }
         .unlock-box { background: #fff; padding: 2.5rem; border-radius: 12px; color: #1c1e21; text-align: center; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .unlock-box h2 { margin-top: 0; color: var(--primary); }
         .unlock-box input { width: 100%; padding: 12px; margin: 1.5rem 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 1rem; text-align: center; }
         .unlock-box button { background: var(--primary); color: white; border: none; padding: 12px 30px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
-        .container-view { max-width: 850px; margin: 2rem auto; padding: 0 20px; }
-        .chat-container { background: var(--whatsapp-bg); padding: 20px; border-radius: 8px; display: flex; flex-direction: column; min-height: 400px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        
+        .container-view { max-width: 900px; margin: 2rem auto; padding: 0 20px; }
+        .hidden { display: none; }
+        #error-msg { color: #ff4444; font-size: 0.85rem; margin-top: 10px; display: none; }
+        
+        /* Estilos herdados dos arquivos originais para manter fidelidade */
+        .chat-container { background: var(--whatsapp-bg); padding: 20px; border-radius: 8px; display: flex; flex-direction: column; min-height: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .day-divider { text-align: center; margin: 25px 0; }
         .day-divider span { background: white; padding: 6px 15px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; color: #54656f; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
         .bubble { max-width: 85%; padding: 10px 14px; border-radius: 8px; margin-bottom: 8px; position: relative; box-shadow: 0 1px 1px rgba(0,0,0,0.1); font-size: 0.95rem; line-height: 1.5; }
@@ -30,44 +38,48 @@
         .bubble.me .sender { color: #075e54; text-align: right; }
         .bubble .time { display: block; font-size: 0.65rem; color: #667781; text-align: right; margin-top: 6px; }
         .media-box { background: rgba(0,0,0,0.05); padding: 10px; border-radius: 6px; margin: 10px 0; text-align: center; border: 1px dashed #ccc; }
-        .timeline-container { padding: 20px; border-left: 2px solid var(--accent); }
-        .timeline-event { position: relative; margin-bottom: 35px; padding-left: 35px; }
+        video, audio { max-width: 100%; border-radius: 4px; }
+        pre { white-space: pre-wrap; font-family: inherit; margin: 0; }
+        
+        /* Estilos Cronologia */
+        .timeline-container { padding: 20px; }
+        .timeline-event { position: relative; margin-bottom: 35px; padding-left: 35px; border-left: 2px solid var(--accent); }
         .timeline-event::before { content: ''; position: absolute; left: -9px; top: 5px; width: 16px; height: 16px; border-radius: 50%; background: var(--primary); border: 3px solid #fff; z-index: 2; }
         .event-card { background: white; padding: 1.2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 5px solid var(--primary); }
         .event-card.critical { border-left-color: var(--danger); }
         .event-card.warning { border-left-color: var(--warning); }
         .event-date { color: var(--accent); font-weight: bold; font-size: 0.85rem; display: block; margin-bottom: 5px; }
         .event-title { margin: 0 0 8px 0; color: var(--primary); font-size: 1.1rem; }
-        .event-desc { font-size: 0.9rem; color: #444; line-height: 1.4; margin: 0; }
-        .hidden { display: none; }
-        #error-msg { color: #ff4444; font-size: 0.85rem; margin-top: 10px; display: none; }
-        video, audio { max-width: 100%; border-radius: 4px; }
-        pre { white-space: pre-wrap; font-family: inherit; margin: 0; }
+        .legend-container { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px; }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; color: #666; }
+        .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
     </style>
 </head>
 <body>
 <div id="unlock-overlay">
     <div class="unlock-box">
         <h2>🛡️ Acesso Seguro</h2>
-        <p>Dados cifrados em <strong>AES-256-CBC</strong>.</p>
+        <p>Relatório Consolidado (Versão Aprovada).</p>
         <input type="password" id="unlock-pass" placeholder="Chave Mestra" onkeypress="if(event.key === 'Enter') tryUnlock()">
-        <button onclick="tryUnlock()">Desbloquear Relatório</button>
+        <button onclick="tryUnlock()">Desbloquear Portal</button>
         <div id="error-msg">Chave inválida ou dados corrompidos.</div>
-        <div id="build-tag" style="font-size: 0.6rem; color: #ccc; margin-top: 15px; opacity: 0.5;">Build: v18.0.5-gold-20260416-1215</div>
+        <div style="font-size: 0.6rem; color: #ccc; margin-top: 15px; opacity: 0.5;">Build: v18.0.6-gold-approved-20260416-1240</div>
     </div>
 </div>
 <header>
-    <h1>🛡️ Relatório de Auditoria: 2026</h1>
-    <p>Reconstituição Integral & Cadeia de Custódia (v18.0.5)</p>
+    <h1>🛡️ Portal de Auditoria: Caso Rayane</h1>
+    <p>Consolidação de Evidências Digitais (v18.0.6)</p>
 </header>
-<div class="nav">
-    <a onclick="showView('chat')">💬 Registro de Chat</a>
-    <a onclick="showView('timeline')">📅 Cronologia</a>
-    <a href="javascript:location.reload()">🔒 Bloquear</a>
+<div class="nav" id="main-nav">
+    <a id="btn-privado" onclick="showView('privado')">💬 Conversa Privada</a>
+    <a id="btn-grupo" onclick="showView('grupo')">👥 Passagens Grupo</a>
+    <a id="btn-cronologia" onclick="showView('cronologia')">📅 Cronologia Mestra</a>
+    <a href="javascript:location.reload()" style="color: #d9534f;">🔒 Sair</a>
 </div>
 <main class="container-view">
-    <div id="view-chat" class="chat-container"></div>
-    <div id="view-timeline" class="timeline-container hidden"></div>
+    <div id="view-content">
+        <p style="text-align: center; color: #888; padding-top: 100px;">🔒 Conteúdo Cifrado</p>
+    </div>
 </main>
 <script>
     let encryptedPayload = "";
@@ -76,11 +88,10 @@
     async function loadData() {
         try {
             const res = await fetch('assets/data.json?v=' + Date.now());
-            if (!res.ok) throw new Error("File not found");
             const data = await res.json();
             encryptedPayload = data.payload;
         } catch(e) { 
-            document.getElementById('error-msg').innerText = "Erro ao carregar dados cifrados.";
+            document.getElementById('error-msg').innerText = "Erro ao carregar banco de dados.";
             document.getElementById('error-msg').style.display = 'block';
         }
     }
@@ -97,7 +108,6 @@
                 padding: CryptoJS.pad.Pkcs7 
             });
             const decryptedStr = decrypted.toString(CryptoJS.enc.Utf8);
-            if (!decryptedStr) return null;
             return JSON.parse(decryptedStr);
         } catch(e) { return null; }
     }
@@ -105,74 +115,30 @@
     function tryUnlock() {
         const pass = document.getElementById('unlock-pass').value;
         const data = decryptPayload(encryptedPayload, pass);
-        if(data && data.chat) {
+        if(data && (data.privado || data.grupo)) {
             portalData = data;
-            renderAll();
             document.getElementById('unlock-overlay').classList.add('unlocked');
+            document.getElementById('main-nav').classList.add('unlocked');
+            showView('privado');
         } else {
             document.getElementById('error-msg').style.display = 'block';
         }
     }
 
     function showView(view) {
-        document.getElementById('view-chat').classList.add('hidden');
-        document.getElementById('view-timeline').classList.add('hidden');
-        document.getElementById('view-' + view).classList.remove('hidden');
-    }
-
-    function renderAll() { renderChat(); renderTimeline(); }
-
-    function renderChat() {
-        const container = document.getElementById('view-chat');
-        container.innerHTML = "";
-        let lastDay = "";
-        portalData.chat.forEach(m => {
-            if (m.day !== lastDay) {
-                container.innerHTML += `<div class="day-divider"><span>${m.day}</span></div>`;
-                lastDay = m.day;
-            }
-            if (m.type === 'system') {
-                container.innerHTML += `<div class="system-msg">${m.text}</div>`;
-            } else if (m.type === 'chat') {
-                let contentHtml = "";
-                m.content.forEach(c => {
-                    if (c.type === 'text') contentHtml += `<div style="margin:0 0 10px 0;"><pre>${c.val}</pre></div>`;
-                    else if (c.type === 'media') {
-                        const url = 'assets/media/' + c.file;
-                        // For audio in WhatsApp format
-                        if (c.file.toLowerCase().endsWith('.opus') || c.file.toLowerCase().endsWith('.ogg')) {
-                            contentHtml += `<div class="media-box"><audio controls><source src="${url}"></audio></div>`;
-                        } else if (c.file.toLowerCase().endsWith('.mp4')) {
-                            contentHtml += `<div class="media-box"><video controls><source src="${url}" type="video/mp4"></video></div>`;
-                        } else {
-                            contentHtml += `<div class="media-box"><img src="${url}" style="max-width:100%;"></div>`;
-                        }
-                    }
-                });
-                container.innerHTML += `
-                    <div class="bubble ${m.bubble}">
-                        <span class="sender">${m.sender}</span>
-                        <div class="msg-text">${contentHtml}</div>
-                        <span class="time">${m.time}</span>
-                    </div>`;
-            }
-        });
-    }
-
-    function renderTimeline() {
-        const container = document.getElementById('view-timeline');
-        container.innerHTML = "";
-        portalData.timeline.forEach(e => {
-            let status = e.title.includes('Calúnia') || e.title.includes('Ameaça') || e.title.includes('Exposição') ? 'critical' : (e.title.includes('Invasão') || e.title.includes('Intimidação') ? 'warning' : '');
-            container.innerHTML += `
-                <div class="timeline-event">
-                    <div class="event-card ${status}">
-                        <div class="event-date">${e.date}</div>
-                        <h3 class="event-title">${e.title}</h3>
-                        <p class="event-desc">${e.desc}</p>
-                    </div>
-                </div>`;
-        });
+        const content = document.getElementById('view-content');
+        if (view === 'privado') {
+            content.innerHTML = '<div class="chat-container">' + portalData.privado + '</div>';
+        } else if (view === 'grupo') {
+            content.innerHTML = '<div class="chat-container">' + portalData.grupo + '</div>';
+        } else if (view === 'cronologia') {
+            content.innerHTML = portalData.cronologia;
+        }
+        
+        // Update nav active state
+        document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'));
+        document.getElementById('btn-' + view).classList.add('active');
+        window.scrollTo(0,0);
     }
     window.onload = loadData;
 </script>
