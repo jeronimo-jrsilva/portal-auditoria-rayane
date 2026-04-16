@@ -62,7 +62,7 @@
 </div>
 <header>
     <h1>🛡️ Relatório de Conformidade: 2026</h1>
-    <p>Evidências Consolidadas & Log de Conformidade (v15.0)</p>
+    <p>Evidências Consolidadas & Log de Conformidade (v18.0)</p>
 </header>
 <div class="nav">
     <a onclick="showView('chat')">💬 Registro de Chat</a>
@@ -79,7 +79,7 @@
 
     async function loadData() {
         try {
-            const res = await fetch('assets/data.enc.json?v=' + Date.now());
+            const res = await fetch('assets/data_v18.json?v=' + Date.now());
             const data = await res.json();
             encryptedPayload = data.payload;
             renderLocked();
